@@ -56,19 +56,19 @@ def translate_srt(origin_sub: list, src_lang: str, target_lang: str, space=False
     # Split the plain text into sentences.
     # Record the index of each sentence in the plain text.
     sen_list, sen_idx = split_and_record(plain_text)
-
+    print(sen_list)
     # Translate the subtitle and split into list
     translated_sen = t.translate_lines(sen_list, src_lang, target_lang)
     translated_sen_list = translated_sen.split('\n')
-
+    #print(translated_sen_list)
     # Compute the mass list
     mass_list = compute_mass_list(dialog_idx, sen_idx)
 
     # split the translated_sen by the timestamp in the srt file
-    if target_lang == 'zh-CN':
-        dialog_list = sen_list2dialog_list(translated_sen_list, mass_list, space, cn=True)
+    if target_lang == 'zh-CN' or 'zh-TW':
+        dialog_list = sen_list2dialog_list(translated_sen_list, mass_list, space, use_jieba=True)
     else:
-        dialog_list = sen_list2dialog_list(translated_sen_list, mass_list, space, cn=False)
+        dialog_list = sen_list2dialog_list(translated_sen_list, mass_list, space, use_jieba=False)
 
     return dialog_list
 
@@ -104,6 +104,8 @@ def translate_and_compose(input_file, output_file, src_lang: str, target_lang: s
     """
     srt_file = open(input_file, encoding=encoding)
     subtitle = list(srt.parse(srt_file.read()))
+    for idx, srt_line in enumerate(subtitle):
+        srt_line.content = srt_line.content.strip()
 
     if mode == 'naive':
         translated_list = simple_translate_srt(subtitle, src_lang, target_lang)

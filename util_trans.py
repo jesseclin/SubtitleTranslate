@@ -5,7 +5,8 @@ import urllib.parse
 import urllib.error
 import json
 import time
-
+import asyncio
+import googletrans
 
 class TkGenerator:
     """
@@ -63,6 +64,8 @@ class Translator:
         self.tk_gen = TkGenerator()
         self.pattern = re.compile(r'\["(.*?)(?:\\n)')
         self.max_limited = 3500
+        self.google_translator = googletrans.Translator()
+        self.translated_list = []
 
     def __post(self, url, text):
         post_data = {
@@ -75,7 +78,7 @@ class Translator:
 
     def __translate(self, text, src_lang, target_lang) -> str:
         tk = self.tk_gen.get_tk(text)
-        url = "http://translate.google.cn/translate_a/single?client=t" \
+        url = "https://translate.google.com.tw/translate_a/single?client=t" \
               "&sl=%s&tl=%s&dt=at&dt=bd&dt=ex&dt=ld&dt=md&dt=qca" \
               "&dt=rw&dt=rm&dt=ss&dt=t&ie=UTF-8&oe=UTF-8&clearbtn=1&otf=1&pc=1" \
               "&srcrom=0&ssel=0&tsel=0&kc=1&tk=%s" % (src_lang, target_lang, tk)
@@ -112,12 +115,35 @@ class Translator:
         :param target_lang: target language. the ISO-639-1 language code of the output text
         :return: translated text
         """
-        result = self.__translate(text, src_lang, target_lang)
-        obj_result = json.loads(result)
+        text_list = [text]
+        translated = ''
+        asyncio.run(self.async_translate_lines(text_list, src_lang=src_lang, target_lang=target_lang))
 
-        list_sentence = [x[0] for x in obj_result[0][:-1]]
+        for idx, item in enumerate(self.translated_list):
+            if idx == len(self.translated_list)-1:
+                translated += item.text
+            else:
+                translated += f"{item.text}\n"
+        return translated
 
-        return ''.join(list_sentence)
+    async def async_translate_lines(self, text_list: list, src_lang: str, target_lang: str):
+        
+        async with googletrans.Translator() as translator:
+            last_idx = 0
+            total_length = 0
+            for i in range(len(text_list)):
+                total_length += len(text_list[i])
+                if total_length > self.max_limited:
+                    #translated += self.translate('\n'.join(text_list[last_idx:i]), src_lang, target_lang)
+                    print(src_lang)
+                    print(target_lang)
+                    print(total_length)
+                    self.translated_list.append(await translator.translate('\n'.join(text_list[last_idx:i]), src=src_lang, dest=target_lang))
+                    await asyncio.sleep(1)
+                    last_idx = i
+                    total_length = 0
+            self.translated_list.append(await translator.translate('\n'.join(text_list[last_idx:]), src=src_lang, dest=target_lang))
+    
 
     def translate_lines(self, text_list: list, src_lang: str, target_lang: str) -> str:
         """
@@ -128,17 +154,13 @@ class Translator:
         :return:
         """
         translated = ''
-        last_idx = 0
-        total_length = 0
-        for i in range(len(text_list)):
-            total_length += len(text_list[i])
-            if total_length > self.max_limited:
-                translated += self.translate('\n'.join(text_list[last_idx:i]), src_lang, target_lang)
-                translated += '\n'
-                time.sleep(1)
-                last_idx = i
-                total_length = 0
-        translated += self.translate('\n'.join(text_list[last_idx:]), src_lang, target_lang)
+        asyncio.run(self.async_translate_lines(text_list, src_lang=src_lang, target_lang=target_lang))
+
+        for idx, item in enumerate(self.translated_list):
+            if idx == len(self.translated_list)-1:
+                translated += item.text
+            else:
+                translated += f"{item.text}\n"
         return translated
 
 

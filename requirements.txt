@@ -1,0 +1,4 @@
+srt
+PyExecJS
+googletrans
+jieba @ git+https://github.com/APCLab/jieba-tw.git

@@ -112,7 +112,7 @@ def get_the_nearest_space(sentence: str, current_idx: int):
         return left_idx + 1
 
 
-def get_the_nearest_split_sen_cn(sentence: str, current_idx: int, last_idx: int, scope=6):
+def get_the_nearest_split_sen_jieba(sentence: str, current_idx: int, last_idx: int, scope=6):
     """
     Split Chinese sentence
     :param sentence: Chinese sentence
@@ -140,7 +140,7 @@ def get_the_nearest_split_sen_cn(sentence: str, current_idx: int, last_idx: int,
     return total_len + last_idx
 
 
-def sen_list2dialog_list(sen_list, mass_list, space=False, cn=False) -> list:
+def sen_list2dialog_list(sen_list, mass_list, space=False, use_jieba=False) -> list:
     """
     Convert the sentence list to dialogue list
     :param cn: is the target language is Chinese
@@ -154,6 +154,19 @@ def sen_list2dialog_list(sen_list, mass_list, space=False, cn=False) -> list:
     for k in range(len(sen_list)):
         sentence = sen_list[k]
         record = mass_list[k]
+        if not record:
+            fixed = False
+            for i_rev in range(1,len(dialog_list),1):
+                if bool(dialog_list[-i_rev]) is True:
+                    dialog_list[-i_rev+1] += sentence
+                    print(i_rev)
+                    fixed = True
+                    break
+            if fixed == False:
+                dialog_list[0] += sentence
+            print(f"[FIXED]{dialog_list}")
+            print(f"[FIXED]{sentence}")
+            continue
 
         total_dialog_of_sentence = len(record)
 
@@ -167,12 +180,12 @@ def sen_list2dialog_list(sen_list, mass_list, space=False, cn=False) -> list:
             last_idx = 0
             for l in range(len(record) - 1):
                 current_idx = int(translated_len * record[l][1] / origin_len)
-                if space and not cn:
+                if space and not use_jieba:
                     current_idx = get_the_nearest_space(sentence, current_idx)
                     dialog_list[record[l][0] - 1] += sentence[last_idx:current_idx]
                     last_idx = current_idx
-                elif cn:
-                    current_idx = get_the_nearest_split_sen_cn(sentence, current_idx, last_idx)
+                elif use_jieba:
+                    current_idx = get_the_nearest_split_sen_jieba(sentence, current_idx, last_idx)
 
                     dialog_list[record[l][0] - 1] += sentence[last_idx:current_idx]
                     last_idx = current_idx
