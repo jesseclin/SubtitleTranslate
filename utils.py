@@ -56,7 +56,7 @@ def translate_srt(origin_sub: list, src_lang: str, target_lang: str, space=False
     # Split the plain text into sentences.
     # Record the index of each sentence in the plain text.
     sen_list, sen_idx = split_and_record(plain_text)
-    print(sen_list)
+    #print(sen_list)
     # Translate the subtitle and split into list
     translated_sen = t.translate_lines(sen_list, src_lang, target_lang)
     translated_sen_list = translated_sen.split('\n')
@@ -115,7 +115,7 @@ def translate_and_compose(input_file, output_file, src_lang: str, target_lang: s
     if len(subtitle) == len(translated_list):
         if both:
             for i in range(len(subtitle)):
-                subtitle[i].content = translated_list[i] + '\n' + subtitle[i].content.replace('\n', ' ')
+                subtitle[i].content = subtitle[i].content.replace('\n', ' ')  + '\n' + translated_list[i]
         else:
             for i in range(len(subtitle)):
                 subtitle[i].content = translated_list[i]

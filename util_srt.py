@@ -124,7 +124,9 @@ def get_the_nearest_split_sen_jieba(sentence: str, current_idx: int, last_idx: i
     last_idx = last_idx if last_idx > current_idx - scope else current_idx - scope
     next_idx = current_idx + scope if current_idx + scope < len(sentence) else len(sentence)
 
+    #print(sentence[last_idx:next_idx])
     words = list(jieba.cut(sentence[last_idx:next_idx]))
+    #print(words,"\n")
     total_len = 0
     word_idx = 0
     target_idx = current_idx - last_idx
@@ -134,7 +136,7 @@ def get_the_nearest_split_sen_jieba(sentence: str, current_idx: int, last_idx: i
         if total_len >= target_idx:
             break
     if word_idx < len(words):
-        if words[word_idx] == '\uff0c':
+        if words[word_idx] == '\uff0c': # FULLWIDTH COMMA
             total_len += len(words[word_idx])
 
     return total_len + last_idx
@@ -159,12 +161,12 @@ def sen_list2dialog_list(sen_list, mass_list, space=False, use_jieba=False) -> l
             for i_rev in range(1,len(dialog_list),1):
                 if bool(dialog_list[-i_rev]) is True:
                     dialog_list[-i_rev+1] += sentence
-                    print(i_rev)
+                    print(len(dialog_list)-i_rev+1)
                     fixed = True
                     break
             if fixed == False:
                 dialog_list[0] += sentence
-            print(f"[FIXED]{dialog_list}")
+            #print(f"[FIXED]{dialog_list}")
             print(f"[FIXED]{sentence}")
             continue
 
